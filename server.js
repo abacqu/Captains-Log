@@ -3,6 +3,7 @@ const express = require('express');
 const app = express();
 require('dotenv').config();
 const mongoose = require('mongoose');
+const Log = require('./models/logs.js');
 
 
 // Database Connection
@@ -24,10 +25,44 @@ app.use(express.urlencoded({ extended: true }));
 
 // ROUTES
 
+// Index
+
+app.get('/logs', (req, res) => {
+    Log.find({}, (error, allLogs) => {
+		res.render('index.ejs', {
+			logs: allLogs,
+		});
+	});
+});
+
 // NEW
 
 app.get('/logs/new', (req, res) => {
     res.render('new.ejs');
+});
+
+
+// CREATE
+app.post('/logs', (req, res) => {
+	if (req.body.shipIsBroken === 'on') {
+		//if checked, req.body.shipIsBroken is set to 'on'
+		req.body.shipIsBroken = true;
+	} else {
+		//if not checked, req.body.shipIsBroken is undefined
+		req.body.shipIsBroken = false;
+	}
+	Log.create(req.body, (error, createdLog) => {
+		res.redirect('/logs');
+	});
+});
+
+// Show
+app.get('/logs/:id', (req, res) => {
+	Log.findById(req.params.id, (err, foundLog) => {
+		res.render('show.ejs', {
+            log: foundLog,
+        });
+	});
 });
 
 
