@@ -4,6 +4,7 @@ const app = express();
 require('dotenv').config();
 const mongoose = require('mongoose');
 const Log = require('./models/logs.js');
+const methodOverride = require("method-override");
 
 
 // Database Connection
@@ -22,6 +23,7 @@ db.on('disconnected', () => console.log('mongo disconnected'));
 // Middleware
 // Body parser middleware: give us access to req.body
 app.use(express.urlencoded({ extended: true }));
+app.use(methodOverride("_method"));
 
 // ROUTES
 
@@ -41,6 +43,33 @@ app.get('/logs/new', (req, res) => {
     res.render('new.ejs');
 });
 
+// DELETE
+
+app.delete("/logs/:id", (req, res) => {
+    Log.findByIdAndRemove(req.params.id, (err, data) => {
+        res.redirect("/logs");
+    });
+});
+
+// Update
+app.put("/logs/:id", (req, res) => {
+    if (req.body.shipIsBroken === "on") {
+        req.body.shipIsBroken = true
+    } else {
+        req.body.shipIsBroken = false
+    }
+
+    Log.findByIdAndUpdate(
+        req.params.id,
+        req.body,
+        {
+            new: true,
+        },
+        (error, updatedLog) => {
+            res.redirect(`/logs/${req.params.id}`);
+        }
+    );
+});
 
 // CREATE
 app.post('/logs', (req, res) => {
@@ -54,6 +83,15 @@ app.post('/logs', (req, res) => {
 	Log.create(req.body, (error, createdLog) => {
 		res.redirect('/logs');
 	});
+});
+
+// EDIT
+app.get("/logs/:id/edit", (req, res) => {
+    Log.findById(req.params.id, (error, foundLog) => {
+        res.render("edit.ejs", {
+            log: foundLog,
+        });
+    });
 });
 
 // Show
